@@ -4,8 +4,12 @@ services:
     animeflv:
         build: "."
         container_name: animeflv-bot
-        image: apiad/animeflv-downloader
+        image: ed0/animeflv-downloader
         volumes: 
             - ".:/src"
         command: ["python3", "-m", "animeflv.bot", "${TOKEN}"]
         restart: always
+        volumes:
+          - ./output:/src/output #Optional
+          - ./config:/root/.megaCmd #Optional
+          - ./data:/root/MEGA #Optional

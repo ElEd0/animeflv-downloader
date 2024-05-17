@@ -5,7 +5,10 @@ from tqdm import tqdm
 from pathlib import Path
 import time
 import json
-from selenium.webdriver import Firefox, FirefoxOptions
+#from selenium.webdriver import Firefox, FirefoxOptions
+
+import os
+import time
 
 
 def search_anime(query: str, find_details:bool = True):
@@ -42,11 +45,33 @@ def find_details(anime_id:str):
     return total_chapters, description
 
 
-def download_one(title: str, chapter: int, output_path: str, return_url:bool=False, override:bool = False):
+def int_to_2_digit_str(num: int):
+    if num >= 10: return str(num)
+    return "0" + str(num)
+
+def download_one(title: str, chapter: int, output_path: str, return_url:bool=False, override:bool = False, season:int = 1):
     print(f"Downloading {title}-{chapter}")
+    
+    seasonStr = int_to_2_digit_str(season)
+    chapterStr = int_to_2_digit_str(chapter)
+    
+    
+    if season == 0:
+        epName = f"{title} E{chapterStr}"
+    else:
+        epName = f"{title} S{seasonStr}E{chapterStr}"
 
-    path = Path(output_path) / f"{title}-{chapter}.mp4"
-
+    if season == 0:
+        dirPath = Path(output_path) / f"{title}"
+        path = dirPath / f"{title} E{chapterStr}.mp4"
+    else:
+        dirPath = Path(output_path) / f"{title}" / f"Season {season}"
+        path = dirPath / f"{title} S{seasonStr}E{chapterStr}.mp4"
+        
+    
+    if not dirPath.exists():
+        dirPath.mkdir(parents=True, exist_ok=True)
+    
     if path.exists():
         if not override:
             print("(!) Refusing to override. Pass override=True (--override in the CLI) to force.")
@@ -55,7 +80,7 @@ def download_one(title: str, chapter: int, output_path: str, return_url:bool=Fal
     print("Downloading AnimeFLV.net webpage")
     html = requests.get(f"https://www3.animeflv.net/ver/{title}-{chapter}").text
 
-    print("Looking for GoCDN link")
+    print("Getting download URLs")
 
     soup = bs4.BeautifulSoup(html, features="html.parser")
     lines = str(soup).split("\n")
@@ -65,56 +90,50 @@ def download_one(title: str, chapter: int, output_path: str, return_url:bool=Fal
             break
 
     l = l.strip()
+    
+    
     data = json.loads(l[13:-1])
+    #print(json.dumps(data, indent=4))
+    dataByServer = {}
+    
     for d in data["SUB"]:
-        if d["server"] == "gocdn":
-            break
-
-    url = d["code"]
-
-    print("Found GoCDN url")
-    print(url)
-
-    print("Opening Firefox (for later...)")
-    options = FirefoxOptions()
-    options.headless = True
-    driver = Firefox(executable_path=Path(__file__).parent / "geckodriver", options=options)
-
-    print("Getting the URL")
-    driver.get(url)
-
-    print("Clicking the play button")
-    play = driver.find_element_by_css_selector("img#start")
-    play.click()
-
-    time.sleep(3)
-
-    video_obj = driver.find_element_by_css_selector("video.jw-video")
-    video_url = video_obj.get_attribute("src")
-
-    print("Found video link")
-    print(video_url)
-    driver.close()
-
-    if return_url:
-        return video_url
-
-    print("Downloading video")
+        dataByServer[d["server"]] = d
+        
+    downloadComplete = False
     
-    stream = requests.get(video_url, stream=True)
-    total_size = int(stream.headers.get('content-length', 0))
+    if "mega" in dataByServer:
+        print("\n===================")
+        print("[" + epName + "] Trying backend: MEGA")
+        print("===================\n")
+        d = dataByServer["mega"]
+        command = "mega-get " + str(d["url"]) + " \"" + str(path.absolute()) + "\""
+        print("Command:", command)
+        code = os.system(command)
+        if code == 0:
+            downloadComplete = True
     
-    if path.exists():
-        print(f"(!) Overwriting {path}")
-
-    try:
-        with path.open("wb") as f:
-            with tqdm(total=total_size, unit='B', unit_scale=True, unit_divisor=1024) as pbar:
-                for data in stream.iter_content(32*1024):
-                    f.write(data)
-                    pbar.update(len(data))
-    except:
-        path.unlink()
-        raise
-
+    
+    if not downloadComplete:
+        dataByServer.pop("mega")
+        for server in dataByServer:
+            # sleep 2s - let time for the user to cancel
+            time.sleep(2)
+            print("\n===================")
+            print("[" + epName + "] Trying backend: " + server)
+            print("===================\n")
+            d = dataByServer[server]
+            url = d["url"] if "url" in d else d["code"]
+            command = "yt-dlp -o \""+str(path.absolute())+"\" " + str(url)
+            print("Command:", command)
+            code = os.system(command)
+            if code == 0:
+                downloadComplete = True
+                break
+    
+    
+    if downloadComplete:
+        print("[" + epName + "] Download Done")
+    else:
+        print("[" + epName + "] Download Failed!!!!")
+    
     return path
