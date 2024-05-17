@@ -24,11 +24,15 @@ This makes the program heavier but it also makes it more reliable and future pro
 ##### Docker
 The recommended way of running the script is using docker, that way you dont have to deal with dependencies. Just build the image from the repo
 
-    docker build -t ed0/animeflv-dler .
+```
+docker build -t ed0/animeflv-dler .
+```
 
 Execute a command in a new container, create volume for `/src/output` which is the default download location
 
-    docker run --rm -it -v ./output:/src/output ed0/animeflv-dler python3 -m animeflv --help
+```
+docker run --rm -it -v ./output:/src/output ed0/animeflv-dler python3 -m animeflv --help
+```
 
 ##### Bare metal
 Install the dependencies
@@ -36,18 +40,22 @@ Install the dependencies
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp)
 
 Then clone repo, cd to the root of the project, optionally create a virtualenv, and then run:
-
-   pip install -r requirements.txt
+```
+pip install -r requirements.txt
+```
 
 ### Usage
 
 Pass the title of an anime series as it appears in the URL. For example, for <https://www3.animeflv.net/anime/shingeki-no-kyojin> the title is `shingeki-no-kyojin`, and optionally the initial and final episode:
 
-   python -m animeflv download shingeki-no-kyojin 1 25 [--output_path <path>]
+```
+python -m animeflv download shingeki-no-kyojin 1 25 [--output_path <path>]
+```
 
 If you don't know the exact URL, try `search`:
-
-   python -m animeflv search "shingeki no kyojin"
+```
+python -m animeflv search "shingeki no kyojin"
+```
 
 It will print something like:
 
@@ -64,10 +72,12 @@ It will print something like:
    Shingeki no Kyojin: Lost Girls [3 chapters] ( shingeki-no-kyojin-lost-girls )
 
 After seeing the search results, if you want to simply download **all chapters** from **all the listed anime**, just type:
-
-   python -m animeflv search <query> --download_all
+```
+python -m animeflv search <query> --download_all
+```
 
 > WARNING: This option can download A LOT of episodes sometimes. Use with care.
+
 #### Download path
 The episodes will download at the location `output/<anime-title>/Season <season>/<anime-title> S<season>E<episode>.mp4` This is the [directory structure recommended by Jellyfin](https://jellyfin.org/docs/general/server/media/shows/), it also works nice with Plex, I recommend adding `[imdbid-<show-id>]` to the end of the anime folder name.
 The script tries to guess the season from the anime title (eg. shingeki-no-kyojin-2, season=2), but the format can be different so you can define the season number by passing argument `--season=<season>`.
@@ -77,15 +87,21 @@ Using `--season=0` will change the download location to `output/<anime-title>/<a
 
 If you want to run the Telegram bot (you should know what you're doing):
 
-   python -m animeflv.bot <TOKEN>
+```
+python -m animeflv.bot <TOKEN>
+```
 
 The bot requires `MP4Box` installed, in Debian-based distributions (Ubuntu) this app is the `gpac` package.
 Also, `zip` is required.
 
-   apt install -y gpac zip
+```
+apt install -y gpac zip
+```
 
 ##### Docker
 
 If you prefer docker, running the bot it is even easier:
 
-    TOKEN=<your-token> docker-compose up
+```
+TOKEN=<your-token> docker-compose up -d
+```
