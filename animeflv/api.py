@@ -65,7 +65,7 @@ def download_one(title: str, chapter: int, output_path: str, return_url:bool=Fal
         dirPath = Path(output_path) / f"{title}"
         path = dirPath / f"{title} E{chapterStr}.mp4"
     else:
-        dirPath = Path(output_path) / f"{title}" / f"Season {season}"
+        dirPath = Path(output_path) / f"{title}" / f"Season {seasonStr}"
         path = dirPath / f"{title} S{seasonStr}E{chapterStr}.mp4"
         
     

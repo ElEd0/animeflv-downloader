@@ -100,7 +100,7 @@ apt install -y gpac zip
 
 ##### Docker
 
-If you prefer docker, running the bot it is even easier:
+If you prefer docker, running the bot is even easier:
 
 ```
 TOKEN=<your-token> docker-compose up -d

@@ -5,11 +5,9 @@ services:
         build: "."
         container_name: animeflv-bot
         image: ed0/animeflv-downloader
-        volumes: 
-            - ".:/src"
         command: ["python3", "-m", "animeflv.bot", "${TOKEN}"]
-        restart: always
+        restart: unless-stopped
         volumes:
           - ./output:/src/output #Optional
-          - ./config:/root/.megaCmd #Optional
-          - ./data:/root/MEGA #Optional
+          #- ./config:/root/.megaCmd #Optional
+          #- ./data:/root/MEGA #Optional
