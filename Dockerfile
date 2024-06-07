@@ -24,7 +24,9 @@ RUN apt-get update \
     && apt-get autoremove -y \
     && apt-get autoclean -y \
 
-	&& useradd anime
+    # Create user that will run command
+    # -m for creating home is required as megacmd expects user's home directory to be writable
+	&& useradd -m anime
 
 
 # Install animeflv-downloader
